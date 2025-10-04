@@ -1,0 +1,3 @@
+[tools]
+"github:JohnnyMorganz/luau-lsp" = "latest"
+stylua = "latest"

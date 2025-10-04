@@ -1,0 +1,17 @@
+{
+	"lsp": {
+		"luau-lsp": {
+			"settings": {
+				"luau-lsp": {
+					"diagnostics": {
+						"strictDatamodelTypes": true
+					}
+				},
+				"roblox": {
+					"enabled": true,
+					"security_level": "plugin"
+				}
+			}
+		}
+	}
+}
