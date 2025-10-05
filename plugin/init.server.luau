@@ -60,7 +60,6 @@ function runTests(body: TestBody): {}
 	LogService:ClearOutput()
 
 	local output = Jest.runCLI(script, body.options, projects):expect()
-	print(output)
 	return output
 end
 
