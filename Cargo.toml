@@ -2,7 +2,6 @@
 name = "jest-companion"
 version = "0.1.0"
 edition = "2024"
-readme = "README.md"
 homepage = "https://github.com/jacktabscode/jest-companion"
 repository = "https://github.com/jacktabscode/jest-companion"
 license = "MIT"
