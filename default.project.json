@@ -1,0 +1,6 @@
+{
+	"name": "jest-companion",
+	"tree": {
+		"$path": "plugin"
+	}
+}

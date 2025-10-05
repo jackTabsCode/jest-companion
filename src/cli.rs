@@ -2,46 +2,32 @@ use clap::{Args, Parser, command};
 use serde::Serialize;
 
 #[derive(Debug, Parser, Serialize, Clone)]
+#[command(version, about = "Run jest-lua tests from the command line")]
 pub struct Cli {
     /// A list of Roblox paths for Jest Lua to discover.
-    #[arg(short, long, required = true)]
+    #[arg(short, long, required = true, value_delimiter = ',')]
     projects: Vec<String>,
 
+    /// Timeout for the server to receive results in seconds.
+    #[arg(short, long, default_value_t = 30)]
+    pub server_timeout: u64,
+
     #[command(flatten, next_help_heading = "runCLI options")]
-    options: JestOptions,
+    pub options: JestOptions,
 }
 
 #[derive(Debug, Args, Serialize, Clone)]
 #[command(rename_all = "camelCase")]
 #[serde(rename_all = "camelCase")]
 pub struct JestOptions {
-    /// When this option is provided, Jest Lua will assume it is running in a CI environment.
-    /// This changes the behavior when a new snapshot is encountered.
-    /// Instead of the regular behavior of storing a new snapshot automatically, it will fail the test and require Jest Lua to be run with updateSnapshot.
-    #[arg(long, verbatim_doc_comment)]
-    ci: bool,
-
     /// Automatically clear mock calls, instances, contexts and results before every test.
     /// Equivalent to calling jest.clearAllMocks() before each test. This does not remove any mock implementation that may have been provided.
     #[arg(long, verbatim_doc_comment)]
     clear_mocks: bool,
 
-    /// Print debugging info about your Jest config.
-    #[arg(long)]
-    debug: bool,
-
     /// Use this flag to show full diffs and errors instead of a patch.
     #[arg(long)]
     expand: bool,
-
-    /// Prints the test results in JSON.
-    /// This mode will send all other test output and user messages to stderr.
-    #[arg(long, verbatim_doc_comment)]
-    json: bool,
-
-    /// Lists all test files that Jest Lua will run given the arguments, and exits.
-    #[arg(long)]
-    list_tests: bool,
 
     /// Disables stack trace in test results output.
     #[arg(long)]
@@ -62,10 +48,6 @@ pub struct JestOptions {
     #[arg(long, verbatim_doc_comment)]
     reset_mocks: bool,
 
-    /// Print your Jest config and then exits.
-    #[arg(long)]
-    show_config: bool,
-
     /// The glob patterns Jest uses to detect test files.
     #[arg(long, value_delimiter = ',')]
     test_match: Vec<String>,
@@ -85,16 +67,11 @@ pub struct JestOptions {
     #[arg(long)]
     test_path_pattern: Option<String>,
 
-    /// Default timeout of a test in milliseconds. Default value: 5000.
+    /// Default timeout of a test in milliseconds.
     #[arg(long, default_value = "5000")]
     test_timeout: u32,
 
-    /// Use this flag to re-record every snapshot that fails during this test run.
-    /// Can be used together with a test suite pattern or with testNamePattern to re-record snapshots.
-    #[arg(long, verbatim_doc_comment)]
-    update_snapshot: bool,
-
     /// Display individual test results with the test suite hierarchy.
     #[arg(long)]
-    verbose: bool,
+    pub verbose: bool,
 }

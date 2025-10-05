@@ -1,2 +1,2 @@
 [plugins.plugin]
-local = "plugin.luau"
+local = "plugin.rbxm"
