@@ -36,7 +36,7 @@ pub struct TestResult {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AssertionResult {
-    pub full_name: String,
+    pub title: String,
     pub status: Status,
     pub failure_messages: Vec<String>,
     pub duration: Option<u64>,

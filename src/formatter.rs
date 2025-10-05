@@ -175,20 +175,12 @@ impl JestFormatter {
                         .map(|d| format!(" ({}ms)", d))
                         .unwrap_or_default();
 
-                    let test_title = if let Some(last_part) =
-                        case.full_name.split(&case.ancestor_titles.join(" ")).last()
-                    {
-                        last_part.trim_start()
-                    } else {
-                        &case.full_name
-                    };
-
                     writeln!(
                         buf,
                         "{}{}{}{}",
                         test_indent,
                         "×".red().bold(),
-                        format!(" {}", test_title).red(),
+                        format!(" {}", case.title).red(),
                         duration.dimmed()
                     )?;
 
@@ -203,49 +195,26 @@ impl JestFormatter {
                         .map(|d| format!(" ({}ms)", d))
                         .unwrap_or_default();
 
-                    let test_title = if let Some(last_part) =
-                        case.full_name.split(&case.ancestor_titles.join(" ")).last()
-                    {
-                        last_part.trim_start()
-                    } else {
-                        &case.full_name
-                    };
-
                     writeln!(
                         buf,
                         "{}{} {}{}",
                         test_indent,
                         "✓".green(),
-                        test_title,
+                        case.title,
                         duration.dimmed()
                     )?;
                 }
                 Status::Pending => {
-                    let test_title = if let Some(last_part) =
-                        case.full_name.split(&case.ancestor_titles.join(" ")).last()
-                    {
-                        last_part.trim_start()
-                    } else {
-                        &case.full_name
-                    };
-
                     writeln!(
                         buf,
                         "{}{} {}",
                         test_indent,
                         "○".yellow(),
-                        test_title.yellow()
+                        case.title.yellow()
                     )?;
                 }
                 Status::Todo => {
-                    let test_title = if let Some(last_part) =
-                        case.full_name.split(&case.ancestor_titles.join(" ")).last()
-                    {
-                        last_part.trim_start()
-                    } else {
-                        &case.full_name
-                    };
-                    writeln!(buf, "{}{} {}", test_indent, "✎".blue(), test_title.blue())?;
+                    writeln!(buf, "{}{} {}", test_indent, "✎".blue(), case.title.blue())?;
                 }
                 _ => {}
             }
