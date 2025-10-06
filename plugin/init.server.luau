@@ -19,6 +19,8 @@ end
 
 type TestBody = {
 	projects: { string },
+	clearOutput: boolean,
+
 	options: {
 		[string]: unknown?,
 	},
@@ -46,21 +48,19 @@ function runTests(body: TestBody): {}
 
 	for _, project in body.projects do
 		local instance = pathToInstance(project)
-		if instance then
-			table.insert(projects, instance)
-		else
-			error(`Couldn't find instance for '{project}'`)
-		end
+		assert(instance, `Couldn't find instance for '{project}'`)
+
+		table.insert(projects, instance)
 	end
 
 	body.options.setupFiles = { script.setup }
 
+	if body.clearOutput then
+		LogService:ClearOutput()
+	end
+
 	local Jest = getJest()
-
-	LogService:ClearOutput()
-
-	local output = Jest.runCLI(script, body.options, projects):expect()
-	return output
+	return Jest.runCLI(script, body.options, projects):expect()
 end
 
 local URL = "http://127.0.0.1:28860"
@@ -80,11 +80,11 @@ function poll(): TestBody?
 	end
 
 	if not response.Success then
-		error(`Poll request error from server: ({response.StatusCode})\n{response.Body}`)
+		error(`Server rejected poll: ({response.StatusCode})\n{response.Body}`)
 	end
 
 	if not response.Body then
-		error("There was no response body from the server")
+		error("Server didn't send back anything")
 	end
 
 	return HttpService:JSONDecode(response.Body) :: TestBody
@@ -102,11 +102,11 @@ function sendOutput(output: TestOutput)
 	end)
 
 	if not reqSuccess then
-		error(`Output request error from server: {response.StatusCode}\n{response.Body}`)
+		error(`Failed to send output to server: {response.StatusCode}\n{response.Body}`)
 	end
 
 	if not response.Success then
-		error(`Output request error from server: {response.StatusCode}\n{response.Body}`)
+		error(`Server rejected output: {response.StatusCode}\n{response.Body}`)
 	end
 end
 
@@ -115,7 +115,7 @@ function loop()
 	do
 		local success, bodyOrErr = pcall(poll)
 		if not success then
-			warn("Poll request error from server", bodyOrErr)
+			warn(`Failed to poll server: {bodyOrErr}`)
 			return
 		end
 
@@ -130,14 +130,16 @@ function loop()
 	do
 		local success, outputOrErr = pcall(runTests, body)
 		if not success then
-			warn("Test run error", outputOrErr)
+			warn(`Test run error: {outputOrErr}`)
 			return
 		end
 
 		output = outputOrErr
 	end
 
-	local success, err = pcall(sendOutput, output)
+	local success, err = pcall(function()
+		sendOutput(output)
+	end)
 	if not success then
 		warn(`Failed to send output: {err}`)
 	end

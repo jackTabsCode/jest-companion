@@ -1,3 +1,4 @@
+--!nocheck
 -- thank you einsteinK
 -- https://devforum.roblox.com/t/61917/8
 

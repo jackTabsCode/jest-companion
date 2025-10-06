@@ -3,6 +3,7 @@ use serde::Serialize;
 
 #[derive(Debug, Parser, Serialize, Clone)]
 #[command(version, about = "Run jest-lua tests from the command line")]
+#[serde(rename_all = "camelCase")]
 pub struct Cli {
     /// A list of Roblox paths for Jest Lua to discover.
     #[arg(short, long, required = true, value_delimiter = ',')]
@@ -11,6 +12,10 @@ pub struct Cli {
     /// Timeout for the server to receive results in seconds.
     #[arg(short, long, default_value_t = 30)]
     pub server_timeout: u64,
+
+    /// If true, the Studio output will be cleared before test runs.
+    #[arg(short, long, default_value_t = false)]
+    pub clear_output: bool,
 
     #[command(flatten, next_help_heading = "runCLI options")]
     pub options: JestOptions,
