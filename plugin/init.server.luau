@@ -141,5 +141,5 @@ end
 
 while true do
 	loop()
-	task.wait(1)
+	task.wait(0.5)
 end
