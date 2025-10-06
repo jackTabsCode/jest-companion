@@ -18,7 +18,7 @@ In `drillbit.toml`:
 ```toml
 [plugins.jest-companion]
 # This won't auto-update
-github = "https://github.com/jackTabsCode/jest-companion/releases/download/v0.1.1/plugin.rbxm"
+github = "https://github.com/jackTabsCode/jest-companion/releases/download/v0.2.1/plugin.rbxm"
 ```
 
 Then, you can run `drillbit` to install the plugin, and `jest-companion` to run your tests in Studio.
