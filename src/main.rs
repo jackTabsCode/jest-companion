@@ -56,7 +56,7 @@ async fn poll(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 async fn output(State(state): State<AppState>, Json(output): Json<Output>) -> impl IntoResponse {
-    let formatter = JestFormatter::new(state.args.options.verbose);
+    let formatter = JestFormatter::new(state.args.options.verbose.unwrap_or_default());
     let text = formatter.format_output(&output);
 
     println!("{}", text);

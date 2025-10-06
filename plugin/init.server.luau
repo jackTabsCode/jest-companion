@@ -2,7 +2,6 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
-local LogService = game:GetService("LogService")
 
 local hotReload = require(script.hotReload)
 
@@ -19,8 +18,6 @@ end
 
 type TestBody = {
 	projects: { string },
-	clearOutput: boolean,
-
 	options: {
 		[string]: unknown?,
 	},
@@ -54,10 +51,7 @@ function runTests(body: TestBody): {}
 	end
 
 	body.options.setupFiles = { script.setup }
-
-	if body.clearOutput then
-		LogService:ClearOutput()
-	end
+	body.options.reporters = {}
 
 	local Jest = getJest()
 	return Jest.runCLI(script, body.options, projects):expect()

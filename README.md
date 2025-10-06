@@ -31,6 +31,5 @@ Run `jest-companion --help` to see the available options. Several of [jest-lua's
 
 ## Notes
 
-- The plugin does not forward logs to the CLI (due to the below). See the Studio output for these.
-- jest-lua still prints test results in Studio. I do not know how to disable this behavior.
+- The plugin does not forward logs to the CLI. See the Studio output for these.
 - jest-companion takes in the table of test results that jest-lua gives it, formats it nicely and prints it in your console. This means that the output may be different than jest-lua's Studio output, sometimes in a less-than-desirable way. If the output you receive from the CLI seems weird or incorrect, file an issue.
