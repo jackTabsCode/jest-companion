@@ -4,16 +4,40 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 
 local hotReload = require(script.hotReload)
+local pathToInstance = require(script.pathToInstance)
 
 function getJest(): any
-	hotReload.flush()
-
 	local Jest = ReplicatedStorage:FindFirstChild("Jest", true)
 	assert(Jest, "Couldn't find Jest!")
 	assert(Jest:IsA("ModuleScript"), "Jest is not a ModuleScript!")
 
+	patchJest(Jest)
+	hotReload.flush()
+
 	local mod = hotReload.require(Jest)
 	return mod
+end
+
+function patchJest(Jest: ModuleScript)
+	local parent = Jest.Parent
+	assert(parent, "Jest has no parent")
+
+	local RobloxShared = parent:FindFirstChild("RobloxShared")
+	assert(RobloxShared, "Jest has no RobloxShared next to it!")
+
+	local originalGetDataModelService = RobloxShared:FindFirstChild("getDataModelService")
+	assert(originalGetDataModelService, "RobloxShared has no getDataModelService module under it")
+
+	originalGetDataModelService:Destroy()
+
+	local getDataModelService = script.patch.getDataModelService:Clone()
+	getDataModelService.Parent = RobloxShared :: any
+
+	local FileSystemService = script.patch.FileSystemService:Clone()
+	FileSystemService.Parent = RobloxShared :: any
+
+	local CoreScriptSyncService = script.patch.CoreScriptSyncService:Clone()
+	CoreScriptSyncService.Parent = RobloxShared :: any
 end
 
 type TestBody = {
@@ -24,21 +48,6 @@ type TestBody = {
 }
 
 type TestOutput = {}
-
-function pathToInstance(path: string): Instance?
-	local parts = path:split("/")
-
-	local instance: Instance? = game:GetService(parts[1])
-	for i = 2, #parts do
-		if not instance then
-			return nil
-		end
-
-		instance = instance:FindFirstChild(parts[i])
-	end
-
-	return instance
-end
 
 function runTests(body: TestBody): {}
 	local projects: { Instance } = {}
