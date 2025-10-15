@@ -33,8 +33,18 @@ function patchJest(Jest: ModuleScript)
 	local getDataModelService = script.patch.getDataModelService:Clone()
 	getDataModelService.Parent = RobloxShared :: any
 
+	local originalFileSystemService = RobloxShared:FindFirstChild("FileSystemService")
+	if originalFileSystemService then
+		originalFileSystemService:Destroy()
+	end
+
 	local FileSystemService = script.patch.FileSystemService:Clone()
 	FileSystemService.Parent = RobloxShared :: any
+
+	local originalCoreScriptSyncService = RobloxShared:FindFirstChild("CoreScriptSyncService")
+	if originalCoreScriptSyncService then
+		originalCoreScriptSyncService:Destroy()
+	end
 
 	local CoreScriptSyncService = script.patch.CoreScriptSyncService:Clone()
 	CoreScriptSyncService.Parent = RobloxShared :: any
@@ -60,7 +70,6 @@ function runTests(body: TestBody): {}
 	end
 
 	body.options.setupFiles = { script.setup }
-	body.options.reporters = {}
 
 	local Jest = getJest()
 	return Jest.runCLI(script, body.options, projects):expect()
@@ -139,6 +148,8 @@ function loop()
 
 		output = outputOrErr
 	end
+
+	print(output)
 
 	local success, err = pcall(function()
 		sendOutput(output)
