@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Args, Parser, command};
 use serde::Serialize;
 
@@ -5,6 +7,10 @@ use serde::Serialize;
 #[command(version, about = "Run jest-lua tests from the command line")]
 #[serde(rename_all = "camelCase")]
 pub struct Cli {
+    /// The path to run jest-companion in. Defaults to the current directory.
+    #[arg(default_value = ".")]
+    pub path: PathBuf,
+
     /// Timeout for the server to receive results in seconds.
     #[arg(short, long, default_value_t = 30)]
     pub server_timeout: u64,

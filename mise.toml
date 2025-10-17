@@ -8,9 +8,7 @@ stylua = "latest"
 [tasks.build-plugin]
 run = "rojo build -o plugin.rbxm"
 
-[tasks.install-cli]
-run = "cargo install --locked --path ."
-
 [tasks.dev]
 run = "drillbit"
-depends = ["build-plugin", "install-cli"]
+depends = ["build-plugin"]
+sources = ["plugin/*", "default.project.json"]

@@ -14,10 +14,11 @@ use axum::{
 };
 use clap::Parser;
 use colored::*;
+use fs_err::tokio as fs;
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::Serialize;
-use std::{path::Path, sync::Arc, time::Duration};
-use tokio::{fs, sync::Mutex};
+use std::{sync::Arc, time::Duration};
+use tokio::sync::Mutex;
 
 mod cli;
 mod config;
@@ -36,10 +37,7 @@ struct AppState {
 async fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
 
-    let config = fs::read_to_string("jest-companion.toml")
-        .await
-        .context("Failed to read config file")?;
-
+    let config = fs::read_to_string(args.path.join("jest-companion.toml")).await?;
     let config: Config = toml::from_str(&config).context("Failed to parse config file")?;
 
     let spinner = ProgressBar::new_spinner();
@@ -135,7 +133,7 @@ async fn fs_write(
     AxumPath(virtual_path): AxumPath<String>,
     body: String,
 ) -> impl IntoResponse {
-    match resolve_path(&state.config, &virtual_path, Path::new(".")) {
+    match resolve_path(&state.config, &virtual_path, &state.args.path) {
         Some(real_path) => {
             if let Some(parent) = real_path.parent()
                 && let Err(e) = fs::create_dir_all(parent).await
@@ -155,7 +153,7 @@ async fn fs_create_dir_all(
     State(state): State<AppState>,
     AxumPath(virtual_path): AxumPath<String>,
 ) -> impl IntoResponse {
-    match resolve_path(&state.config, &virtual_path, Path::new(".")) {
+    match resolve_path(&state.config, &virtual_path, &state.args.path) {
         Some(real_path) => match fs::create_dir_all(&real_path).await {
             Ok(_) => (StatusCode::OK, ()).into_response(),
             Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
@@ -168,7 +166,7 @@ async fn fs_exists(
     State(state): State<AppState>,
     AxumPath(virtual_path): AxumPath<String>,
 ) -> impl IntoResponse {
-    match resolve_path(&state.config, &virtual_path, Path::new(".")) {
+    match resolve_path(&state.config, &virtual_path, &state.args.path) {
         Some(real_path) => match fs::metadata(&real_path).await {
             Ok(_) => (StatusCode::OK, ()).into_response(),
             Err(e) => (StatusCode::NOT_FOUND, e.to_string()).into_response(),
@@ -181,7 +179,7 @@ async fn fs_delete(
     State(state): State<AppState>,
     AxumPath(virtual_path): AxumPath<String>,
 ) -> impl IntoResponse {
-    match resolve_path(&state.config, &virtual_path, Path::new(".")) {
+    match resolve_path(&state.config, &virtual_path, &state.args.path) {
         Some(real_path) => match fs::remove_file(&real_path).await {
             Ok(_) => (StatusCode::OK, ()).into_response(),
             Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
