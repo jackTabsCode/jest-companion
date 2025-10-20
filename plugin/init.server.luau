@@ -150,8 +150,6 @@ function loop()
 		output = outputOrErr
 	end
 
-	print(output)
-
 	local success, err = pcall(function()
 		sendOutput(output)
 	end)
