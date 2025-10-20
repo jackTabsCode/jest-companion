@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Args, Parser, command};
 use serde::Serialize;
 
@@ -5,9 +7,9 @@ use serde::Serialize;
 #[command(version, about = "Run jest-lua tests from the command line")]
 #[serde(rename_all = "camelCase")]
 pub struct Cli {
-    /// A list of Roblox paths for Jest Lua to discover.
-    #[arg(short, long, required = true, value_delimiter = ',')]
-    projects: Vec<String>,
+    /// The path to run jest-companion in. Defaults to the current directory.
+    #[arg(default_value = ".")]
+    pub path: PathBuf,
 
     /// Timeout for the server to receive results in seconds.
     #[arg(short, long, default_value_t = 30)]
@@ -75,4 +77,8 @@ pub struct JestOptions {
     /// Display individual test results with the test suite hierarchy.
     #[arg(long)]
     pub verbose: Option<bool>,
+
+    /// Use this flag to re-record every snapshot that fails during this test run. Can be used together with a test suite pattern or with testNamePattern to re-record snapshots.
+    #[arg(short, long)]
+    pub update_snapshot: Option<bool>,
 }

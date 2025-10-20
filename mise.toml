@@ -5,13 +5,10 @@
 "github:rojo-rbx/rojo" = "7"
 stylua = "latest"
 
-[tasks.build]
+[tasks.build-plugin]
 run = "rojo build -o plugin.rbxm"
 
-[tasks.insert]
+[tasks.dev]
 run = "drillbit"
-depends = ["build"]
-
-[tasks.test]
-run = 'cargo run -- -p ReplicatedStorage/shared,ServerScriptService --testMatch "**/*.spec"'
-depends = ["insert"]
+depends = ["build-plugin"]
+sources = ["plugin/**/*", "default.project.json"]
