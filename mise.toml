@@ -11,4 +11,4 @@ run = "rojo build -o plugin.rbxm"
 [tasks.dev]
 run = "drillbit"
 depends = ["build-plugin"]
-sources = ["plugin/*", "default.project.json"]
+sources = ["plugin/**/*", "default.project.json"]

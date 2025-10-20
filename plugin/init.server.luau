@@ -70,6 +70,7 @@ function runTests(body: TestBody): {}
 	end
 
 	body.options.setupFiles = { script.setup }
+	body.options.reporters = {}
 
 	local Jest = getJest()
 	return Jest.runCLI(script, body.options, projects):expect()

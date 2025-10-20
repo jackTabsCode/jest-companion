@@ -43,28 +43,23 @@ local function request(op, method, path, body)
 end
 
 function FileSystemService:WriteFile(path, contents)
-	print("WriteFile", path)
 	request("file", "PUT", path, contents)
 end
 
 function FileSystemService:CreateDirectories(path)
-	print("CreateDirectories", path)
-	request("dir", "PUT", path, "")
+	request("dir", "PUT", path)
 end
 
 function FileSystemService:Exists(path)
-	print("Exists", path)
-	local resp = request("exists", "GET", path, "")
+	local resp = request("exists", "GET", path)
 	return resp.Success
 end
 
 function FileSystemService:Remove(path)
-	print("Remove", path)
-	request("file", "DELETE", path, "")
+	request("file", "DELETE", path)
 end
 
 function FileSystemService:IsRegularFile(path)
-	print("IsRegularFile", path)
 	return self:Exists(path)
 end
 
