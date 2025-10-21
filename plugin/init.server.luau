@@ -115,7 +115,7 @@ function sendOutput(output: TestOutput)
 	end)
 
 	if not reqSuccess then
-		error(`Failed to send output to server: {response.StatusCode}\n{response.Body}`)
+		error(`Failed to send output to server because it wasn't running`)
 	end
 
 	if not response.Success then
