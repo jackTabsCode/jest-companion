@@ -1,5 +1,6 @@
 --!strict
 
+local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 
@@ -77,11 +78,17 @@ function runTests(body: TestBody): {}
 end
 
 local URL = "http://127.0.0.1:28860"
+local PROTOCOL_VERSION = "1"
 
 function poll(): TestBody?
 	local reqSuccess, response = pcall(function()
 		return HttpService:RequestAsync({
 			Url = `{URL}/poll`,
+			Method = "POST",
+			Body = HttpService:JSONEncode({
+				protocolVersion = PROTOCOL_VERSION,
+				rojoConnected = Workspace:GetAttribute("__Rojo_ConnectionUrl") ~= nil,
+			}),
 			Compress = Enum.HttpCompression.None,
 			Headers = { ["Content-Type"] = "application/json" },
 		})
@@ -89,7 +96,7 @@ function poll(): TestBody?
 
 	if not reqSuccess then
 		-- They aren't running the CLI
-		return
+		return nil
 	end
 
 	if not response.Success then
@@ -150,9 +157,7 @@ function loop()
 		output = outputOrErr
 	end
 
-	local success, err = pcall(function()
-		sendOutput(output)
-	end)
+	local success, err = pcall(sendOutput, output)
 	if not success then
 		warn(`Failed to send output: {err}`)
 	end
