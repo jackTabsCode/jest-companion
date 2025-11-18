@@ -7,7 +7,7 @@ use crate::{
 use anyhow::Context;
 use axum::{
     Json, Router,
-    extract::{Path as AxumPath, State},
+    extract::{DefaultBodyLimit, Path as AxumPath, State},
     http::StatusCode,
     response::IntoResponse,
     routing::{delete, get, post, put},
@@ -54,14 +54,15 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let app = Router::new()
-        .route("/poll", post(poll))
         .route("/output", post(output))
+        .route("/poll", post(poll))
         .route("/run-error", post(run_error))
         .route("/fs/file/{*path}", put(fs_write))
         .route("/fs/dir/{*path}", put(fs_create_dir_all))
         .route("/fs/exists/{*path}", get(fs_exists))
         .route("/fs/file/{*path}", delete(fs_delete))
-        .with_state(state.clone());
+        .with_state(state.clone())
+        .layer(DefaultBodyLimit::max(1024 * 1024 * 1024));
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:28860").await?;
 
