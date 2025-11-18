@@ -56,6 +56,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/poll", post(poll))
         .route("/output", post(output))
+        .route("/run-error", post(run_error))
         .route("/fs/file/{*path}", put(fs_write))
         .route("/fs/dir/{*path}", put(fs_create_dir_all))
         .route("/fs/exists/{*path}", get(fs_exists))
@@ -155,6 +156,20 @@ async fn output(State(state): State<AppState>, Json(output): Json<Output>) -> im
     tokio::spawn(async move {
         tokio::time::sleep(Duration::from_millis(100)).await;
         std::process::exit(if output.was_successful() { 0 } else { 1 });
+    });
+
+    (StatusCode::OK, ())
+}
+
+async fn run_error(State(state): State<AppState>) -> impl IntoResponse {
+    let spinner = state.spinner.lock().await;
+    spinner.finish_and_clear();
+
+    error!("The test runner encountered an error. See the Studio output for more details.");
+
+    tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        std::process::exit(1);
     });
 
     (StatusCode::OK, ())

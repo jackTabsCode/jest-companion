@@ -122,12 +122,28 @@ function sendOutput(output: TestOutput)
 	end)
 
 	if not reqSuccess then
-		error(`Failed to send output to server because it wasn't running`)
+		error("Failed to send output to server because it wasn't running")
 	end
 
 	if not response.Success then
 		error(`Server rejected output: {response.StatusCode}\n{response.Body}`)
 	end
+end
+
+function reportError()
+	local reqSuccess = pcall(function()
+		return HttpService:RequestAsync({
+			Url = `{URL}/run-error`,
+			Method = "POST",
+			Compress = Enum.HttpCompression.None,
+		})
+	end)
+
+	if not reqSuccess then
+		error("Failed to let server know there was an error")
+	end
+
+	return nil
 end
 
 function loop()
@@ -151,6 +167,12 @@ function loop()
 		local success, outputOrErr = pcall(runTests, body)
 		if not success then
 			warn(`Test run error: {outputOrErr}`)
+
+			local reportSuccess, reportErr = pcall(reportError)
+			if not reportSuccess then
+				warn(`Failed to report error: {reportErr}`)
+			end
+
 			return
 		end
 
