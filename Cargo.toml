@@ -1,6 +1,6 @@
 [package]
 name = "jest-companion"
-version = "0.3.0-beta.2"
+version = "0.3.0-beta.3"
 edition = "2024"
 description = "Run jest-lua tests from the command line"
 homepage = "https://github.com/jacktabscode/jest-companion"
