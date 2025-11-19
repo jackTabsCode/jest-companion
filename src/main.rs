@@ -13,16 +13,16 @@ use axum::{
     routing::{delete, get, post, put},
 };
 use clap::Parser;
-use colored::*;
 use fs_err::tokio as fs;
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use indicatif_log_bridge::LogWrapper;
+use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 
 mod cli;
 mod config;
-mod log;
 mod output;
 mod resolver;
 
@@ -36,12 +36,24 @@ struct AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let logger =
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+            .format_timestamp(None)
+            .format_module_path(false)
+            .build();
+    let level = logger.filter();
+
+    let multi = MultiProgress::new();
+
+    LogWrapper::new(multi.clone(), logger).try_init().unwrap();
+    log::set_max_level(level);
+
     let args = Cli::parse();
 
     let config = fs::read_to_string(args.path.join("jest-companion.toml")).await?;
     let config: Config = toml::from_str(&config).context("Failed to parse config file")?;
 
-    let spinner = ProgressBar::new_spinner();
+    let spinner = multi.add(ProgressBar::new_spinner());
     spinner.set_style(ProgressStyle::default_spinner());
     spinner.set_message("Waiting for plugin");
     spinner.enable_steady_tick(Duration::from_millis(100));
@@ -129,7 +141,7 @@ async fn poll(
     *plugin_connected = true;
 
     if !body.rojo_connected {
-        warn!("Rojo is not connected on the running Studio instance, just so you know!");
+        warn!("Rojo is not connected on the running Studio instance");
     }
 
     let spinner = state.spinner.lock().await;
@@ -190,7 +202,7 @@ async fn fs_write(
             }
             match fs::write(&real_path, body).await {
                 Ok(_) => {
-                    log!("File written: {}", real_path.display());
+                    info!("File written: {}", real_path.display());
                     (StatusCode::OK, ()).into_response()
                 }
                 Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
@@ -207,7 +219,7 @@ async fn fs_create_dir_all(
     match resolve_path(&state.config, &virtual_path, &state.args.path) {
         Some(real_path) => match fs::create_dir_all(&real_path).await {
             Ok(_) => {
-                log!("Directory created: {}", real_path.display());
+                info!("Directory created: {}", real_path.display());
                 (StatusCode::OK, ()).into_response()
             }
             Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
@@ -236,7 +248,7 @@ async fn fs_delete(
     match resolve_path(&state.config, &virtual_path, &state.args.path) {
         Some(real_path) => match fs::remove_file(&real_path).await {
             Ok(_) => {
-                log!("File deleted: {}", real_path.display());
+                info!("File deleted: {}", real_path.display());
                 (StatusCode::OK, ()).into_response()
             }
             Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
