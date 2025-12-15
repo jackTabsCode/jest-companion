@@ -3,6 +3,7 @@
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
+local LogService = game:GetService("LogService")
 
 local hotReload = require(script.hotReload)
 local pathToInstance = require(script.pathToInstance)
@@ -60,7 +61,9 @@ type TestBody = {
 
 type TestOutput = {}
 
-function runTests(body: TestBody): {}
+function runTests(body: TestBody): TestOutput
+	LogService:ClearOutput()
+
 	local projects: { Instance } = {}
 
 	for _, project in body.projects do
