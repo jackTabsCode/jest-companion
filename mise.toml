@@ -1,7 +1,7 @@
 [tools]
 "github:JohnnyMorganz/luau-lsp" = "latest"
-"github:axodotdev/cargo-dist" = "0.30.0"
-"github:jacktabscode/drillbit" = "0.1.4"
+"github:axodotdev/cargo-dist" = "0.30.3"
+"github:jacktabscode/drillbit" = "0.1.5"
 "github:rojo-rbx/rojo" = "7"
 stylua = "latest"
 
