@@ -505,7 +505,7 @@ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
 name = "jest-companion"
-version = "0.3.0-beta.3"
+version = "0.3.0-beta.4"
 dependencies = [
  "anyhow",
  "axum",
