@@ -18,7 +18,12 @@ indicatif = "0.18.0"
 indicatif-log-bridge = "0.2.3"
 log = "0.4.28"
 serde = { version = "1.0.228", features = ["derive"] }
-tokio = { version = "1.47.1", features = ["fs", "macros", "rt-multi-thread"] }
+tokio = { version = "1.47.1", default-features = false, features = [
+  "fs",
+  "macros",
+  "rt-multi-thread",
+  "sync"
+] }
 toml = "0.9.8"
 
 # The profile that 'dist' will build with
