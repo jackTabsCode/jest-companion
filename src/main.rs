@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-const PROTOCOL_VERSION: &str = "1";
+const PROTOCOL_VERSION: &str = "2";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
