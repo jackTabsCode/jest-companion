@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Args, Parser, command};
+use clap::{Args, Parser};
 use serde::Serialize;
 
 #[derive(Debug, Parser, Serialize, Clone)]

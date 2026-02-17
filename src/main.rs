@@ -1,7 +1,6 @@
 use crate::{
     cli::{Cli, JestOptions},
     config::Config,
-    output::Output,
     resolver::resolve_path,
 };
 use anyhow::Context;
@@ -16,14 +15,13 @@ use clap::Parser;
 use fs_err::tokio as fs;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use indicatif_log_bridge::LogWrapper;
-use log::{error, info, warn};
+use log::{debug, error, warn};
 use serde::{Deserialize, Serialize};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 
 mod cli;
 mod config;
-mod output;
 mod resolver;
 
 #[derive(Debug, Clone)]
@@ -32,6 +30,7 @@ struct AppState {
     config: Arc<Config>,
     spinner: Arc<Mutex<ProgressBar>>,
     plugin_connected: Arc<Mutex<bool>>,
+    received_first_write: bool,
 }
 
 #[tokio::main]
@@ -63,11 +62,13 @@ async fn main() -> anyhow::Result<()> {
         config: Arc::new(config),
         spinner: Arc::new(Mutex::new(spinner)),
         plugin_connected: Arc::new(Mutex::new(false)),
+        received_first_write: false,
     };
 
     let app = Router::new()
-        .route("/output", post(output))
         .route("/poll", post(poll))
+        .route("/write", post(write))
+        .route("/results", post(results))
         .route("/run-error", post(run_error))
         .route("/fs/file/{*path}", put(fs_write))
         .route("/fs/dir/{*path}", put(fs_create_dir_all))
@@ -157,18 +158,28 @@ async fn poll(
     (StatusCode::OK, Json(body)).into_response()
 }
 
-async fn output(State(state): State<AppState>, Json(output): Json<Output>) -> impl IntoResponse {
+async fn write(State(mut state): State<AppState>, data: String) -> impl IntoResponse {
+    let spinner = state.spinner.lock().await;
+    if !state.received_first_write {
+        state.received_first_write = true;
+        spinner.set_message("Receiving results");
+    }
+
+    spinner.println(&data);
+}
+
+#[derive(Debug, Deserialize)]
+struct Results {
+    success: bool,
+}
+
+async fn results(State(state): State<AppState>, Json(results): Json<Results>) -> impl IntoResponse {
     let spinner = state.spinner.lock().await;
     spinner.finish_and_clear();
 
-    let formatter = output::Formatter::new(state.args.options.verbose.unwrap_or_default());
-    let text = formatter.format_output(&output);
-
-    print!("{}", text);
-
     tokio::spawn(async move {
         tokio::time::sleep(Duration::from_millis(100)).await;
-        std::process::exit(if output.was_successful() { 0 } else { 1 });
+        std::process::exit(if results.success { 0 } else { 1 });
     });
 
     (StatusCode::OK, ())
@@ -202,7 +213,7 @@ async fn fs_write(
             }
             match fs::write(&real_path, body).await {
                 Ok(_) => {
-                    info!("File written: {}", real_path.display());
+                    debug!("File written: {}", real_path.display());
                     (StatusCode::OK, ()).into_response()
                 }
                 Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
@@ -219,7 +230,7 @@ async fn fs_create_dir_all(
     match resolve_path(&state.config, &virtual_path, &state.args.path) {
         Some(real_path) => match fs::create_dir_all(&real_path).await {
             Ok(_) => {
-                info!("Directory created: {}", real_path.display());
+                debug!("Directory created: {}", real_path.display());
                 (StatusCode::OK, ()).into_response()
             }
             Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
@@ -248,7 +259,7 @@ async fn fs_delete(
     match resolve_path(&state.config, &virtual_path, &state.args.path) {
         Some(real_path) => match fs::remove_file(&real_path).await {
             Ok(_) => {
-                info!("File deleted: {}", real_path.display());
+                debug!("File deleted: {}", real_path.display());
                 (StatusCode::OK, ()).into_response()
             }
             Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),

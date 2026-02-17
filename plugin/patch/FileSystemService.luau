@@ -36,7 +36,7 @@ local function request(op, method, path, body)
 	})
 
 	if not response.Success then
-		error(`Server rejected filesystem op:{response.StatusCode}\n{response.Body}`)
+		error(`Server rejected filesystem op: {response.StatusCode}\n{response.Body}`)
 	end
 
 	return response

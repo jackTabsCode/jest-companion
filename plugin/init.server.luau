@@ -1,5 +1,3 @@
---!strict
-
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -22,10 +20,10 @@ function getJest(): any
 end
 
 function patchJest(Jest: ModuleScript)
-	local parent = Jest.Parent
-	assert(parent, "Jest has no parent")
+	local Packages = Jest.Parent
+	assert(Packages, "Jest has no parent")
 
-	local RobloxShared = parent:FindFirstChild("RobloxShared")
+	local RobloxShared = Packages:FindFirstChild("RobloxShared")
 	assert(RobloxShared, "Jest has no RobloxShared next to it!")
 
 	local originalGetDataModelService = RobloxShared:FindFirstChild("getDataModelService")
@@ -34,7 +32,7 @@ function patchJest(Jest: ModuleScript)
 	originalGetDataModelService:Destroy()
 
 	local getDataModelService = script.patch.getDataModelService:Clone()
-	getDataModelService.Parent = RobloxShared :: any
+	getDataModelService.Parent = RobloxShared
 
 	local originalFileSystemService = RobloxShared:FindFirstChild("FileSystemService")
 	if originalFileSystemService then
@@ -42,7 +40,7 @@ function patchJest(Jest: ModuleScript)
 	end
 
 	local FileSystemService = script.patch.FileSystemService:Clone()
-	FileSystemService.Parent = RobloxShared :: any
+	FileSystemService.Parent = RobloxShared
 
 	local originalCoreScriptSyncService = RobloxShared:FindFirstChild("CoreScriptSyncService")
 	if originalCoreScriptSyncService then
@@ -50,7 +48,23 @@ function patchJest(Jest: ModuleScript)
 	end
 
 	local CoreScriptSyncService = script.patch.CoreScriptSyncService:Clone()
-	CoreScriptSyncService.Parent = RobloxShared :: any
+	CoreScriptSyncService.Parent = RobloxShared
+
+	local originalWritable = RobloxShared:FindFirstChild("Writeable")
+	if originalWritable then
+		originalWritable:Destroy()
+	end
+
+	local Writeable = script.patch.Writeable:Clone()
+	Writeable.Parent = RobloxShared
+
+	local originalChalk = Packages:FindFirstChild("ChalkLua")
+	if originalChalk then
+		originalChalk:Destroy()
+	end
+
+	local Chalk = script.patch.ChalkLua:Clone()
+	Chalk.Parent = Packages
 end
 
 type TestBody = {
@@ -60,9 +74,11 @@ type TestBody = {
 	},
 }
 
-type TestOutput = {}
+type TestResults = {
+	success: boolean,
+}
 
-function runTests(body: TestBody): TestOutput
+function runTests(body: TestBody): TestResults
 	LogService:ClearOutput()
 
 	local projects: { Instance } = {}
@@ -75,14 +91,16 @@ function runTests(body: TestBody): TestOutput
 	end
 
 	body.options.setupFiles = { script.setup }
-	body.options.reporters = {}
 
 	local Jest = getJest()
-	return Jest.runCLI(script, body.options, projects):expect()
+	local result = Jest.runCLI(script, body.options, projects):expect()
+	return {
+		success = result.results.numFailedTestSuites == 0 and result.results.numFailedTests == 0,
+	}
 end
 
 local URL = "http://127.0.0.1:28860"
-local PROTOCOL_VERSION = "1"
+local PROTOCOL_VERSION = "2"
 
 function poll(): TestBody?
 	local reqSuccess, response = pcall(function()
@@ -114,12 +132,12 @@ function poll(): TestBody?
 	return HttpService:JSONDecode(response.Body) :: TestBody
 end
 
-function sendOutput(output: TestOutput)
+function sendResults(results: TestResults)
 	local reqSuccess, response = pcall(function()
 		return HttpService:RequestAsync({
-			Url = `{URL}/output`,
+			Url = `{URL}/results`,
 			Method = "POST",
-			Body = HttpService:JSONEncode(output),
+			Body = HttpService:JSONEncode(results),
 			Headers = { ["Content-Type"] = "application/json" },
 			Compress = Enum.HttpCompression.None,
 		})
@@ -166,7 +184,7 @@ function loop()
 		body = bodyOrErr
 	end
 
-	local output: TestOutput
+	local output: TestResults
 	do
 		local success, outputOrErr = pcall(runTests, body)
 		if not success then
@@ -183,7 +201,7 @@ function loop()
 		output = outputOrErr
 	end
 
-	local success, err = pcall(sendOutput, output)
+	local success, err = pcall(sendResults, output)
 	if not success then
 		warn(`Failed to send output: {err}`)
 	end
