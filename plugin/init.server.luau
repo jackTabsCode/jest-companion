@@ -1,5 +1,6 @@
 --!strict
 
+local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
@@ -188,7 +189,9 @@ function loop()
 	end
 end
 
-while true do
-	loop()
-	task.wait(0.5)
+if not RunService:IsRunning() then
+	while true do
+		loop()
+		task.wait(0.5)
+	end
 end
